@@ -19,9 +19,8 @@
 %%% Author contact: w.a.de.jong@gmail.com
 
 %%% ====================================================================
-%%% translates a data structure of a pre-defined form to an XML document.
-%%% ====================================================================
-
+%%% @doc translates a data structure of a pre-defined form to an XML document.
+%%%
 %%% This is the companion of erlsom_parse, which performs the inverse operation.
 %%% Both modules use the same 'model' that descibes the translation, see the
 %%% introduction to erlsom_parse for the definition of this model.
@@ -36,19 +35,21 @@
 %% debug(Text) ->
   %% io:format("write: ~p\n", [Text]).
 
-%% Returns the XML document. {ok, Document}
+%% @doc Returns the XML document.
+-spec write(term(), erlsom:model()) -> {ok, iodata()} | {error, string()}.
 write(Struct, Model) ->
   write(Struct, Model, []).
 
+-spec write(term(), erlsom:model(), [Option]) -> {ok, iodata()} | {error, Message::string()} when
+    Option :: {output, list | charlist | binary}.
 write(Struct, Model = #model{tps = Types}, Options) ->
-
   %% start with _document type.
   case lists:keysearch('_document', 2, Types) of
     {value, #type{els = [Head | _Tail], mxd = Mixed}} ->
       CurrentValue = Struct,
       ResultWithThisElement =
-        processElementValues([CurrentValue], Head,
-                             [], 0, Model, {[], 0}, Mixed),
+      processElementValues([CurrentValue], Head,
+                           [], 0, Model, {[], 0}, Mixed),
       %% debug(ResultWithThisElement);
       case proplists:get_value(output, Options, list) of
         list ->

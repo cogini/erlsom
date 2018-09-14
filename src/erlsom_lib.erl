@@ -577,6 +577,7 @@ makeTag(NameInXsd, _SchemaInfo) ->
 listLength(undefined) -> 0;
 listLength(List) -> length(List).
 
+% -spec toUnicode(binary()) -> binary().
 toUnicode(Bin) ->
   autodetect(Bin).
 

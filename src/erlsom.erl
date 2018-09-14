@@ -1,4 +1,4 @@
-%%% Copyright (C) 2006 - 2008 Willem de Jong
+%%% @copyright 2006 - 2008 Willem de Jong
 %%%
 %%% This file is part of Erlsom.
 %%%
@@ -16,13 +16,13 @@
 %%% License along with Erlsom.  If not, see
 %%% <http://www.gnu.org/licenses/>.
 %%%
-%%% Author contact: w.a.de.jong@gmail.com
+%%% @author Willem de Jong <w.a.de.jong@gmail.com>
 
 %%% ====================================================================
 %%% Support for XML Schema in Erlang
 %%% ====================================================================
 
-%%% This is the user interface for the Erlsom functions.
+%%% @doc This is the user interface for the Erlsom functions.
 
 -module(erlsom).
 
@@ -64,9 +64,22 @@
   {internalError, any()}.
 -export_type([sax_event/0]).
 
-%%----------------------------------------------------------------------
-%% Function: compile_xsd/2
-%% Purpose: compile an XSD into a structure to be used by erlsom:parse().
+-type compile_option() :: {namespaces, [#ns{} | {Uri::string(), Prefix::string()}]} |
+  {prefix, string()} |
+  {type_prefix, string()} |
+  {group_prefix, string()} |
+  {element_prefix, string()} |
+  % {include_fun, TODO} |
+  {include_dirs, list(file:filename_all())} |
+  {dir_list, list(file:filename_all())} |
+  {include_any_attribs, boolean()} |
+  % {value_fun, TODO} |
+  % {include_files, TODO} |
+  {strict, boolean()} |
+  {already_imported, list({Uri::string(), Prefix::string()})}.
+-export_type([compile_option/0]).
+
+%% @doc Compile an XSD into a structure to be used by {@link scan/2}.
 %% Args:
 %%     XSD  = string(): the XSD.
 %%     Options = [Option]
@@ -135,9 +148,11 @@
 %% Returns: {ok, Model}, where Model is the internal structure, see
 %% xml2struct.erl
 %%----------------------------------------------------------------------
+-spec compile_xsd(file:filename_all()) -> {ok, model()} | {error, term()}.
 compile_xsd(Xsd) ->
   compile_xsd(Xsd, []).
 
+-spec compile_xsd(file:filename_all(), [compile_option()]) -> {ok, model()} | {error, term()}.
 compile_xsd(Xsd, Options) ->
   case catch erlsom_compile:compile(Xsd, Options) of
     {error, Message} -> {error, Message};
@@ -145,9 +160,13 @@ compile_xsd(Xsd, Options) ->
     Result -> Result
   end.
 
+-spec compile_xsd_file(file:filename_all()) -> {ok, model()} | {error, Reason} when
+    Reason :: file:posix() | badarg | terminated | system_limit.
 compile_xsd_file(Xsd) ->
   compile_xsd_file(Xsd, []).
 
+-spec compile_xsd_file(file:filename_all(), [compile_option()]) -> {ok, model()} | {error, Reason} when
+    Reason :: file:posix() | badarg | terminated | system_limit.
 compile_xsd_file(XsdFile, Options) ->
   case file:read_file(XsdFile) of
     {ok, Bin} ->
@@ -156,13 +175,10 @@ compile_xsd_file(XsdFile, Options) ->
       Error
   end.
 
-%%----------------------------------------------------------------------
-%% Note: these functions should no longer be used, use compile_xsd!
-%%
-%% Function: compile/3
-%% Purpose: compile an XSD into a structure to be used by erlsom:parse().
+%% @deprecated Use {@link compile_xsd/2} instead.
+%% @doc Compile XSD into a structure to be used by {@link parse/2}.
 %% Args:
-%%     XSD  = string(): the XSD.
+%%     XSD = string(): the XSD.
 %%     Prefix = string
 %%     Namespaces = [#ns]
 %%
@@ -174,21 +190,27 @@ compile_xsd_file(XsdFile, Options) ->
 %% Returns: {ok, Model}, where Model is the internal structure, see
 %% xml2struct.erl
 %%----------------------------------------------------------------------
+-spec compile(binary()) -> {ok, model()} | {error, term()}.
 compile(Xsd) ->
   compile_xsd(Xsd, [{prefix, "p"}]).
 
+-spec compile(binary(), string()) -> {ok, model()} | {error, term()}.
 compile(Xsd, Prefix) ->
   compile_xsd(Xsd, [{prefix, Prefix}]).
 
+-spec compile(binary(), string(), [#ns{}]) -> {ok, model()} | {error, term()}.
 compile(Xsd, Prefix, Namespaces) ->
   compile_xsd(Xsd, [{prefix, Prefix}, {namespaces, Namespaces}]).
 
+-spec compile_file(file:name_all()) -> model() | {error, term()}.
 compile_file(XsdFile) ->
   compile_file(XsdFile, "p").
 
+-spec compile_file(file:name_all(), string()) -> {ok, model()} | {error, term()}.
 compile_file(XsdFile, Prefix) ->
   compile_file(XsdFile, Prefix, []).
 
+-spec compile_file(file:name_all(), string(), [#ns{}]) -> {ok, model()} | {error, term()}.
 compile_file(XsdFile, Prefix, Namespaces) ->
   case file:read_file(XsdFile) of
     {ok, Bin} ->
@@ -198,15 +220,14 @@ compile_file(XsdFile, Prefix, Namespaces) ->
   end.
 
 %%----------------------------------------------------------------------
-%% Function: scan/2
-%% Purpose: translate an XML document that conforms to the XSD to a
-%%     structure of records. (The XSD is represented by the 'Model', the
-%%     result of the translation of the XSD by erlsom:compile().)
-%% Args:
-%%     Xml = string(): the Xml document.
-%%     Model = the internal representation of the XSD; the result of
-%%     erlsom:compile().
-%%     Options = [Option].
+%% @doc Translate an XML document that conforms to the XSD to a structure of records.
+%%
+%% The XSD is represented by {@link model()}, the result of the translation of the
+%% XSD by {@link compile_xsd/1}.
+%%
+%% @param Xml the XML document.
+%% @param Model the internal representation of the XSD; the result of {@link compile_xsd/1}.
+%% @param Options
 %%     Option = {continuation_function, Continuation_function,
 %%               Continuation_state}
 %%
@@ -223,9 +244,11 @@ compile_file(XsdFile, Prefix, Namespaces) ->
 %%     TrailingCharacters = any characters in the input string after the
 %%       XML document.
 %%----------------------------------------------------------------------
+-spec scan(string() | binary(), model()) -> {ok, term(), string()} | {error, term()}.
 scan(Xml, Model) ->
   scan(Xml, Model, []).
 
+-spec scan(string() | binary(), model(), list()) -> {ok, term(), string()} | {error, term()}.
 scan(Xml, #model{value_fun = ValFun} = Model, Options) ->
   State = #state{model=Model, namespaces=[], value_fun = ValFun},
   case lists:keysearch(acc, 1, Options) of
@@ -240,6 +263,7 @@ scan(Xml, #model{value_fun = ValFun} = Model, Options) ->
   %%{Data, CS2} = F(CS),
   %%{T ++ Data, S#state{continuationState = {F, CS2}}}.
 
+-spec scan2(string() | binary(), term(), list()) -> {ok, term(), string()} | {error, term()}.
 scan2(Xml, State, Options) ->
   case catch erlsom_sax:parseDocument(Xml, State,
                                       fun erlsom_parse:xml2StructCallback/2,
@@ -250,9 +274,11 @@ scan2(Xml, State, Options) ->
   end.
 
 
+-spec scan_file(file:name_all(), model()) -> {ok, term(), string()} | {error, term()}.
 scan_file(File, Model) ->
   scan_file(File, Model, []).
 
+-spec scan_file(file:name_all(), model(), list()) -> {ok, term(), string()} | {error, term()}.
 scan_file(File, Model, Options) ->
   case file:read_file(File) of
     {ok, Bin} ->
@@ -267,11 +293,10 @@ scan_file(File, Model, Options) ->
       Error
   end.
 
-%%----------------------------------------------------------------------
-%% Function: parse/2
-%% Deprecated. Same as 'scan/2', but without the trailing
-%% characters. If there are any trailing characters they are ignored.
-%%----------------------------------------------------------------------
+%% @deprecated Use {@link scan/2} instead.
+%% @doc Same as {@link scan/2}, but without the trailing characters. If there are any
+%% trailing characters they are ignored.
+-spec parse(string() | binary(), model()) -> {ok, term()} | {error, term()}.
 parse(Xml, Model) ->
   case scan(Xml, Model) of
     {error, Message} -> {error, Message};
@@ -286,13 +311,15 @@ parse_file(File, Model) ->
       Error
   end.
 
+% -spec simple_form(Xml :: binary() | string(), [Option]) -> TODO when
+% Option :: {nameFun, TODO}
+% | {output_encoding, Encoding::TODO}
 
-%%----------------------------------------------------------------------
-%% Function: simple_form/2
-%% Purpose: translate an XML document to 'simple form'.
-%% Args:
-%%     Xml: an XML document (encoded binary or list or string())
-%%     Options: [Option]
+%% @doc Translate an XML document to 'simple form'.
+%%
+%% @param Xml an XML document (encoded binary or list or string())
+%% @param Options
+%%
 %%     Option: {nameFun, NameFun} |
 %%             {output_encoding, Encoding}
 %%
@@ -306,9 +333,11 @@ parse_file(File, Model) ->
 %% Returns: {ok, SimpleForm, Tail}
 %%     or {error, ErrorMessage}.
 %%----------------------------------------------------------------------
+-spec simple_form(string() | binary(), list()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
 simple_form(Xml, Options) ->
   erlsom_simple_form:scan(Xml, Options).
 
+-spec simple_form(string() | binary()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
 simple_form(Xml) ->
   simple_form(Xml, []).
 
@@ -324,19 +353,21 @@ simple_form_file(File, Options) ->
   end.
 
 
-%%----------------------------------------------------------------------
-%% Function: write/2
-%% Purpose: translate a structure of records to an XML document. This is the
-%%     inverse of erlsom:parse(). The XML will conform to an XSD, provided
-%%     that the input structure matches with this XSD.
-%%     (The XSD is represented by the 'Model', the result of the translation
-%%     of the XSD by erlsom:compile().)
-%% Args:
-%%     Struct: a structure or records that represents the XML document. See
-%%     the documentation for the mapping.
-%%     Model = the internal representation of the XSD; the result of
+%% @doc Translate a structure of records to an XML document.
+%%
+%% This is the inverse of erlsom:parse(). The XML will conform to an XSD, provided
+%% that the input structure matches with this XSD.
+%%
+%% (The XSD is represented by the 'Model', the result of the translation
+%% of the XSD by erlsom:compile().)
+%%
+%% @param Struct a structure or records that represents the XML document.
+%% See the documentation for the mapping.
+%%
+%% @param Model the internal representation of the XSD; the result of
 %%     erlsom:compile().
-%%     Options: [{output, list | charlist | binary}]. In case the option 'list' is
+%%
+%% @param Options: [{output, list | charlist | binary}]. In case the option 'list' is
 %%     selected (this is the default), the output will be a list of unicode
 %%     code points. In case the option 'charlist' is selected, the output will
 %%     be a charlist, i.e. a deep lists of numbers representing Unicode
@@ -346,9 +377,12 @@ simple_form_file(File, Options) ->
 %% Returns: {ok, Document} where Document is an XML document (a string),
 %%     or {error, ErrorMessage}.
 %%----------------------------------------------------------------------
+-spec write(term(), model()) -> {ok, iodata()} | {error, Message::string()}.
 write(Struct, Model) ->
   erlsom:write(Struct, Model, []).
 
+-spec write(term(), model(), [Option]) -> {ok, iodata()} | {error, Message::string()} when
+    Option :: {output, list | charlist | binary}.
 write(Struct, Model, Options) ->
   erlsom_write:write(Struct, Model, Options).
 
@@ -459,6 +493,8 @@ write_hrl_file(Xsd, Output) ->
 write_hrl_file(Xsd, Prefix, Output) ->
   write_hrl_file(Xsd, Prefix, [], Output).
 
+-spec write_hrl_file(file:name_all(), string(), [#ns{}], file:name_all()) -> ok | {error, Reason} when
+    Reason :: file:posix() | badarg | terminated | system_limit.
 write_hrl_file(Xsd, Prefix, Namespaces, Output) ->
   case file:read_file(Xsd) of
     {ok, Bin} ->
@@ -468,6 +504,8 @@ write_hrl_file(Xsd, Prefix, Namespaces, Output) ->
       Error
   end.
 
+-spec add_xsd_file(file:filename_all(), list(), model()) -> {ok, model()} | {error, Reason} when
+      Reason :: file:posix() | badarg | terminated | system_limit.
 add_xsd_file(XsdFile, Options, Model) ->
   case file:read_file(XsdFile) of
     {ok, Bin} ->

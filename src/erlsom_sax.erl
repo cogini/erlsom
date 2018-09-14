@@ -1,4 +1,4 @@
-%%% Copyright (C) 2006 - 2008 Willem de Jong
+%%% @copyright 2006 - 2008 Willem de Jong
 %%%
 %%% This file is part of Erlsom.
 %%%
@@ -16,10 +16,10 @@
 %%% License along with Erlsom.  If not, see
 %%% <http://www.gnu.org/licenses/>.
 %%%
-%%% Author contact: w.a.de.jong@gmail.com
+%%% @author Willem de Jong <w.a.de.jong@gmail.com>
 
 %%% ====================================================================
-%%% An XML parser, using the SAX model.
+%%% @doc An XML parser, using the SAX model.
 %%% ====================================================================
 
 -module(erlsom_sax).
@@ -28,6 +28,32 @@
 
 -type attribute() :: #attribute{}.
 -export_type([attribute/0]).
+
+-type sax_option() :: expand_entities | {expand_entities, boolean()} |
+  {output_encoding, atom()} |
+  {continuation_function, fun((string(), term()) -> {string(), term()}), term()} |
+  {encoding, atom()} |
+  {max_entity_depth, integer() | infinity} |
+  {max_entity_size, integer() | infinity} |
+  {max_nr_of_entities, integer() | infinity} |
+  {max_expanded_entity_size, integer() | infinity}.
+-export_type([sax_option/0]).
+
+-type encoding() :: utf8 | utf16be | utf16le | 'latin-1' | 'iso_8859_1' | 'iso_8859_15' | list.
+
+-type sax_event() :: startDocument |
+  endDocument |
+  {startPrefixMapping, Prefix::string(), URI::string()} |
+  {endPrefixMapping, Prefix::string()} |
+  {startElement, Uri::string(), LocalName::string(), Prefix::string(), [attribute()]} |
+  {endElement, Uri::string(), LocalName::string(), Prefix::string()} |
+  {characters, Characters::string()} |
+  {ignorableWhitespace, Characters::string()} |
+  {processingInstruction, Target::term(), Data::term()} | % TODO: type
+  {error, Description::string()} |
+  {internalError, Description::string()}.
+
+-type event_fun() :: fun((sax_event(), term()) -> term()).
 
 -export([parseDocument/3]).
 -export([parseDocument/4]).
@@ -72,13 +98,6 @@
 %%  Returns: State
 %%    (i.e.: the result of the last invocation of the callback function)
 %%
-%%  parseDocumentBinary(Xml, State, EventFun, Encoding)
-%%  parseDocument(Xml, State, EventFun, Encoding, Options)
-%%
-%% Just like parseDocument, but working on a binary in stead of a list.
-%% Encoding = the encoding of the binary (atom()). Supported values:
-%% - 'utf-8'
-%% - 'latin-1'
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,7 +129,7 @@
 %%    Namespace attributes (xmlns:*) will not be reported.
 %%    There will be NO attribute values for defaulted attributes!
 %%
-%%    Providing 'Prefix'in stead of 'Qualified name' is probably not quite
+%%    Providing 'Prefix' instead of 'Qualified name' is probably not quite
 %%    in line with the SAX spec, but it appears to be more convenient.
 %%
 %%  {endElement, Uri, LocalName, Prefix}
@@ -135,14 +154,17 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
+-spec parseDocument(string() | binary(), term(), event_fun()) -> term().
 parseDocument(Xml, UserState, Callback) ->
   parseDocument(Xml, UserState, Callback, []).
 
+-spec parseDocument(string() | binary(), term(), event_fun(), [sax_option()]) -> term().
 parseDocument(Xml, UserState, Callback, Options) ->
   S = (getOptions(Options))#erlsom_sax_state{callback = Callback,
                                              user_state = UserState},
   parseDocument(Xml, S).
 
+-spec parseDocument(string() | binary(), #erlsom_sax_state{}) -> term().
 parseDocument(Xml, S) when is_list(Xml) ->
   erlsom_sax_list:parse(Xml, S);
 
@@ -158,6 +180,16 @@ parseDocument(Xml, S) when is_binary(Xml) ->
       parseDocumentBinary(Encoding, Xml, S)
   end.
 
+%% @doc Just like {@link parseDocument/3}, but working on a binary instead of a list.
+%% Encoding = the encoding of the binary (atom()). Supported values:
+%% - 'utf8'
+%% - 'utf16be'
+%% - 'utf16le'
+%% - 'latin-1'
+%% - 'iso_8859_1'
+%% - 'iso_8859_15'
+
+-spec parseDocumentBinary(encoding(), binary(), term()) -> term().
 parseDocumentBinary(Encoding, Xml, State) ->
   case Encoding of
     'utf8' ->
@@ -178,9 +210,11 @@ parseDocumentBinary(Encoding, Xml, State) ->
       throw({error, "Encoding not supported: " ++ atom_to_list(Encoding)})
   end.
 
+-spec getOptions([sax_option()]) -> #erlsom_sax_state{}.
 getOptions(Options) ->
   getOptions(Options, #erlsom_sax_state{}).
 
+-spec getOptions([sax_option()], #erlsom_sax_state{}) -> #erlsom_sax_state{}.
 getOptions([], S) ->
   case S#erlsom_sax_state.continuation_fun of
     undefined ->

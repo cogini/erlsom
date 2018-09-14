@@ -84,7 +84,6 @@
    %% refernces.
    path = []}).    %% path
 
-
 -export([compile/2]).
 -export([compile_parsed_xsd/2]).
 -export([compile_parsed_xsd/3]).
@@ -108,6 +107,7 @@
   %% end,
   %% debugTypes(T).
 
+% -spec compile(file:filename_all(), list()) -> erlsom:model().
 compile(Xsd, Options) ->
   compile_internal(Xsd, Options, false).
 
@@ -116,6 +116,7 @@ compile_parsed_xsd(ParsedXsd, Options) ->
 
 %% This is slightly messy: xsd can either be a parsed xsd or not. If it isn't, then it still has
 %% to be parsed.
+% -spec compile_internal(TODO, [compile_option()], boolean()) -> TODO
 compile_internal(Xsd, Options, Parsed) ->
   Namespaces = case lists:keysearch('namespaces', 1, Options) of
                  {value, {_, Namesp}} ->
@@ -240,35 +241,35 @@ compile_parsed_xsd(ParsedXsd, Prefix, Namespaces, IncludeFun, IncludeDirs, Inclu
   Acc = #p1acc{tns = TargetNs,
                includeFun = IncludeFun,
                includeDirs = IncludeDirs,
-           includeFiles = IncludeFiles,
+               includeFiles = IncludeFiles,
                strict = Strict,
-           efd = ParsedXsd#schemaType.elementFormDefault,
-           afd = ParsedXsd#schemaType.attributeFormDefault,
-           nsp = Nsp,
-           nss = Nss ++ ImportedNsMapping, %  ++ ToBeImportedNsMapping
+               efd = ParsedXsd#schemaType.elementFormDefault,
+               afd = ParsedXsd#schemaType.attributeFormDefault,
+               nsp = Nsp,
+               nss = Nss ++ ImportedNsMapping, %  ++ ToBeImportedNsMapping
                imported = ImportedNs},
   case catch transform(ParsedXsd, Acc) of
     {error, Message} -> {error, Message};
     {'EXIT', Message} -> throw({'EXIT', Message});
     IntermediateResult ->
       case catch erlsom_pass2:secondPass(IntermediateResult#p1acc.tps,
-                     #schemaInfo{targetNamespace = IntermediateResult#p1acc.tns,
-                             namespaces = clean_up(IntermediateResult#p1acc.nss),
-                             atts = IntermediateResult#p1acc.atts,
-                             attGrps = IntermediateResult#p1acc.attGrps,
+                                         #schemaInfo{targetNamespace = IntermediateResult#p1acc.tns,
+                                                     namespaces = clean_up(IntermediateResult#p1acc.nss),
+                                                     atts = IntermediateResult#p1acc.atts,
+                                                     attGrps = IntermediateResult#p1acc.attGrps,
                                                      strict = Strict,
                                                      include_any_attrs = IncludeAnyAttribs,
                                                      value_fun = ValueFun}) of
-     {error, Message} -> {error, Message};
-         {'EXIT', Message} -> throw({'EXIT', Message});
-     FinalResult -> {ok, FinalResult}
+        {error, Message} -> {error, Message};
+        {'EXIT', Message} -> throw({'EXIT', Message});
+        FinalResult -> {ok, FinalResult}
       end
   end.
 
+-spec clean_up([#ns{}]) -> [#ns{}].
 clean_up(Namespaces) ->
-  %% filter out namespace records that do not heva efd set.
+  %% Filter out namespace records that do not have efd set.
   [Ns || #ns{efd = Efd} = Ns <- Namespaces, Efd /= undefined].
-
 
 %% -record(schemaType, {targetNamespace, elementFormDefault, elements}).
 transform(#schemaType{elements=Elements, imports=Impts},
@@ -941,8 +942,9 @@ translateQuasiAlternative(#localElementType{name=Name, type=Type, ref=undefined,
 %% translateQuasiAlternative(#groupRefType{ref=Ref}, Acc = #p1acc{nss = Nss}) ->
 %%   {#alternative{tag="##TODO", type=erlsom_lib:makeGroupRef(Ref, Nss), real=false}, Acc}.
 
-%% used to process the old (deprecated) form to pass namespace info to the compiler.
-%% each #ns{namespace, prefix} record has to be transated to {Namespace, Prefix, undefined}
+-spec translateNs(#ns{} | {Uri::string(), Prefix::string()}) -> #ns{}.
+%% @doc Process the old (deprecated) form to pass namespace info to the compiler.
+%% Each #ns{namespace, prefix} record has to be transated to {Namespace, Prefix, undefined}
 %% translateNs(#ns{prefix = Prefix, uri = Ns}) ->
 %%   {Ns, Prefix, undefined}.
 %% TODO: sort this out - what is correct?

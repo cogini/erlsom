@@ -43,12 +43,12 @@
 %% debug(Text) ->
   %% io:format("~p\n", [Text]).
 
-
 %% -record(model, {tps, nss, tns}).
 %% -record(type, {nm, tp = sequence, els, atts = [], anyAttr, nillable, nr, mn = 1, mx = 1}).
 %% -record(el, {alts, mn = 1, mx = 1, nr}).
 
-%% Returns the new #model.
+-spec add(file:filename_all(), list(), erlsom:model()) -> erlsom:model().
+%% @doc Returns the new #model.
 add(Xsd, Options, Model1) ->
   {ok, Model2} = erlsom:compile_xsd(Xsd, Options),
   add_model(Model1, Model2).
@@ -56,6 +56,7 @@ add(Xsd, Options, Model1) ->
 add_xsd_model(Model1) ->
   add_model(Model1, erlsom_parseXsd:xsdModel()).
 
+-spec add_model(erlsom:model(), erlsom:model()) -> erlsom:model().
 add_model(Model1 = #model{tps = Tps, nss = Nss, tns = Tns, th = Th},
           _Model2 = #model{tps = NewTps, nss = NewNss, th = NewTh}) ->
   [Document | OtherTypes] = Tps,
@@ -78,4 +79,3 @@ add_model(Model1 = #model{tps = Tps, nss = Nss, tns = Tns, th = Th},
   UpdatedTypes = erlsom_pass2:pass5(CombinedTypes, Info),
 
   Model1#model{tps = UpdatedTypes, nss = CombinedNss, th = CombinedTh}.
-
