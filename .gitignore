@@ -6,3 +6,4 @@ include.mk
 .rebar
 .eunit
 .test
+erlsom.plt
