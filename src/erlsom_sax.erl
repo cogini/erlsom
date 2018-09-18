@@ -152,17 +152,17 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
--spec parseDocument(string() | binary(), term(), erlsom:event_fun()) -> term().
+-spec parseDocument(erlsom:xml_data(), term(), erlsom:event_fun()) -> term().
 parseDocument(Xml, UserState, Callback) ->
   parseDocument(Xml, UserState, Callback, []).
 
--spec parseDocument(string() | binary(), term(), erlsom:event_fun(), [sax_option()]) -> term().
+-spec parseDocument(erlsom:xml_data(), term(), erlsom:event_fun(), [sax_option()]) -> term().
 parseDocument(Xml, UserState, Callback, Options) ->
   S = (getOptions(Options))#erlsom_sax_state{callback = Callback,
                                              user_state = UserState},
   parseDocument(Xml, S).
 
--spec parseDocument(string() | binary(), #erlsom_sax_state{}) -> term().
+-spec parseDocument(erlsom:xml_data(), #erlsom_sax_state{}) -> term().
 parseDocument(Xml, S) when is_list(Xml) ->
   erlsom_sax_list:parse(Xml, S);
 

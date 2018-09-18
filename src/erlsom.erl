@@ -1,3 +1,7 @@
+%%% @doc Support for XML Schema in Erlang
+%%%
+%%% This module provides the user interface for the Erlsom functions.
+%%%
 %%% @copyright 2006 - 2008 Willem de Jong
 %%%
 %%% This file is part of Erlsom.
@@ -17,12 +21,6 @@
 %%% <http://www.gnu.org/licenses/>.
 %%%
 %%% @author Willem de Jong <w.a.de.jong@gmail.com>
-
-%%% ====================================================================
-%%% Support for XML Schema in Erlang
-%%% ====================================================================
-
-%%% @doc This is the user interface for the Erlsom functions.
 
 -module(erlsom).
 
@@ -67,19 +65,29 @@
 -type event_fun() :: fun((sax_event(), term()) -> term()).
 -export_type([event_fun/0]).
 
--type compile_option() :: {namespaces, [#ns{} | {Uri::string(), Prefix::string()}]} |
+-type include_file() :: {Namespace :: string(), Uri :: uri(), Prefix :: prefix()}.
+
+%% Function that finds the files that are included or imported in the XSD.
+-type include_fun() :: fun((
+  Namespace :: string() | undefined,
+  SchemaLocation :: string() | undefined,
+  IncludeFiles :: [include_file()],
+  IncludeDirs :: [string()] | undefined) -> {Xsd :: string(), Prefix :: prefix() | undefined}).
+-export_type([include_fun/0]).
+
+-type compile_option() :: {namespaces, [#ns{} | {Uri :: uri(), Prefix :: prefix()}]} |
   {prefix, string()} |
   {type_prefix, string()} |
   {group_prefix, string()} |
   {element_prefix, string()} |
-  % {include_fun, TODO} |
+  {include_fun, include_fun()} |
   {include_dirs, list(file:filename_all())} |
   {dir_list, list(file:filename_all())} |
   {include_any_attribs, boolean()} |
   % {value_fun, TODO} |
-  % {include_files, TODO} |
+  {include_files, [include_file()]} |
   {strict, boolean()} |
-  {already_imported, list({Uri::string(), Prefix::string()})}.
+  {already_imported, list({Uri :: uri(), Prefix :: prefix()})}.
 -export_type([compile_option/0]).
 
 -type xml_data() :: string() | binary().
@@ -110,7 +118,7 @@
 %%             option was passed to compile_xsd(); [] otherwise.
 %%           Include_Dirs. This is the value of the Include_dirs option if provided,
 %%             'undefined' otherwise.
-%%           Prefix_list
+%%
 %%        Include_fun should return the {XSD, Prefix}, where XSD is a
 %%           XSD = string()
 %%           Prefix = string or 'undefined', see above.
@@ -186,8 +194,8 @@ compile_xsd_file(XsdFile, Options) ->
 %% @deprecated Use {@link compile_xsd/2} instead.
 %% @doc Compile XSD into a structure to be used by {@link parse/2}.
 %% @param XSD the XSD.
-%% @prefix Prefix String added to the record names in the XSD.
-%% @prefix Namespaces List of [#ns], should include the URIs of imported namespaces;
+%% @param Prefix String added to the record names in the XSD.
+%% @param Namespaces List of [#ns], should include the URIs of imported namespaces;
 %%     the purpose is to define the prefix for those.
 %% @returns {ok, Model}, where Model is the internal structure, see
 %% xml2struct.erl
@@ -240,17 +248,19 @@ compile_file(XsdFile, Prefix, Namespaces) ->
 %% data (a list of unicode code points), and NewState is the information that
 %% is passed to the next invocation.
 %%
-%% Returns: {ok, Structure, TrailingCharacters}, where
+%% @returns {ok, Structure, TrailingCharacters}, where
 %%     Structure is a structure of records that represent the XML
 %%     document. See the documentation for the mapping;
 %%     TrailingCharacters = any characters in the input string after the
 %%       XML document.
 %%----------------------------------------------------------------------
--spec scan(xml_data(), model()) -> {ok, term(), string()} | {error, term()}.
+-spec scan(xml_data(), model()) ->
+    {ok, Structure :: term(), TrailingCharacters :: string()} | {error, term()}.
 scan(Xml, Model) ->
   scan(Xml, Model, []).
 
--spec scan(xml_data(), model(), list()) -> {ok, term(), string()} | {error, term()}.
+-spec scan(xml_data(), model(), list()) ->
+    {ok, Structure :: term(), TrailingCharacters :: string()} | {error, term()}.
 scan(Xml, #model{value_fun = ValFun} = Model, Options) ->
   State = #state{model=Model, namespaces=[], value_fun = ValFun},
   case lists:keysearch(acc, 1, Options) of
@@ -265,7 +275,8 @@ scan(Xml, #model{value_fun = ValFun} = Model, Options) ->
   %%{Data, CS2} = F(CS),
   %%{T ++ Data, S#state{continuationState = {F, CS2}}}.
 
--spec scan2(xml_data(), term(), list()) -> {ok, term(), string()} | {error, term()}.
+-spec scan2(xml_data(), term(), list()) ->
+    {ok, Structure :: term(), TrailingCharacters :: string()} | {error, term()}.
 scan2(Xml, State, Options) ->
   case catch erlsom_sax:parseDocument(Xml, State,
                                       fun erlsom_parse:xml2StructCallback/2,
@@ -296,15 +307,17 @@ scan_file(File, Model, Options) ->
   end.
 
 %% @deprecated Use {@link scan/2} instead.
-%% @doc Same as {@link scan/2}, but without the trailing characters. If there are any
-%% trailing characters they are ignored.
--spec parse(xml_data(), model()) -> {ok, term()} | {error, term()}.
+%% @doc Same as {@link scan/2}, but does not return the trailing characters.
+-spec parse(xml_data(), model()) -> {ok, term()} | {error, Message} when
+      Message :: string().
 parse(Xml, Model) ->
   case scan(Xml, Model) of
     {error, Message} -> {error, Message};
     {ok, Structure, _Tail} -> {ok, Structure}
   end.
 
+-spec parse_file(file:name_all(), model()) -> {ok, term()} | {error, Reason} when
+      Reason :: file_error() | string().
 parse_file(File, Model) ->
   case file:read_file(File) of
     {ok, Bin} ->
@@ -312,10 +325,6 @@ parse_file(File, Model) ->
     Error ->
       Error
   end.
-
-% -spec simple_form(Xml :: binary() | string(), [Option]) -> TODO when
-% Option :: {nameFun, TODO}
-% | {output_encoding, Encoding::TODO}
 
 %% @doc Translate an XML document to 'simple form'.
 %%
@@ -332,22 +341,25 @@ parse_file(File, Model) ->
 %%
 %%  See parse_sax() for a description of the output_encoding option.
 %%
-%% Returns: {ok, SimpleForm, Tail}
-%%     or {error, ErrorMessage}.
+%% @returns {ok, SimpleForm, Tail} or {error, ErrorMessage}.
 %%----------------------------------------------------------------------
--spec simple_form(xml_data(), list()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
+-spec simple_form(xml_data(), list()) ->
+    {ok, SimpleForm :: term(), Tail :: string()} | {error, Message :: string()}.
 simple_form(Xml, Options) ->
   erlsom_simple_form:scan(Xml, Options).
 
--spec simple_form(xml_data()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
+-spec simple_form(xml_data()) ->
+    {ok, SimpleForm :: term(), Tail :: string()} | {error, Message :: string()}.
 simple_form(Xml) ->
   simple_form(Xml, []).
 
--spec simple_form_file(file:name_all()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
+-spec simple_form_file(file:name_all()) ->
+    {ok, SimpleForm :: term(), Tail :: string()} | {error, Message :: string()}.
 simple_form_file(File) ->
   simple_form_file(File, []).
 
--spec simple_form_file(file:name_all(), list()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
+-spec simple_form_file(file:name_all(), list()) ->
+    {ok, SimpleForm :: term(), Tail :: string()} | {error, Message :: string()}.
 simple_form_file(File, Options) ->
   case file:read_file(File) of
     {ok, Bin} ->
@@ -359,7 +371,7 @@ simple_form_file(File, Options) ->
 
 %% @doc Translate a structure of records to an XML document.
 %%
-%% This is the inverse of erlsom:parse(). The XML will conform to an XSD, provided
+%% This is the inverse of @{link erlsom:parse/1}. The XML will conform to an XSD, provided
 %% that the input structure matches with this XSD.
 %%
 %% (The XSD is represented by the 'Model', the result of the translation
@@ -369,7 +381,7 @@ simple_form_file(File, Options) ->
 %% See the documentation for the mapping.
 %%
 %% @param Model the internal representation of the XSD; the result of
-%%     erlsom:compile().
+%%     {@link erlsom:compile/1}.
 %%
 %% @param Options: [{output, list | charlist | binary}]. In case the option 'list' is
 %%     selected (this is the default), the output will be a list of unicode
@@ -431,15 +443,12 @@ parse_sax(Xml, State, EventFun, Options) ->
 parse_sax(Xml, State, EventFun) ->
   parse_sax(Xml, State, EventFun, []).
 
-%%----------------------------------------------------------------------
-%% Function: sax/3
-%% Deprecated. Same as 'parse_sax/3', but without the trailing
-%% characters. If there are any trailing characters they are ignored.
-%%----------------------------------------------------------------------
-
+%% @deprecated Same as @{link parse_sax/3}, but does not return the trailing characters.
+-spec sax(xml_data(), term(), event_fun()) -> term().
 sax(Xml, State, EventFun) ->
   sax(Xml, State, EventFun, []).
 
+-spec sax(xml_data(), term(), event_fun(), list()) -> term().
 sax(Xml, State, EventFun, Options) ->
   {ok, Result, _TrailingCharacters} = parse_sax(Xml, State, EventFun, Options),
   Result.
@@ -455,6 +464,7 @@ write_hrl(Model, Output, Options) ->
 
 %%----------------------------------------------------------------------
 %% @doc Write record definitions (a .hrl file) for an XSD.
+%%
 %% @param Xsd name of the input XSD file.
 %% @param Output name of the output file.
 %% @param Options Compile options plus the following:

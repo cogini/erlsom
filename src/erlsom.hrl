@@ -22,9 +22,8 @@
 %%% Header file for erlsom
 %%% ====================================================================
 
-%% prefix=the prefix that will be used in the result
--record(ns, {uri,
-             prefix,
+-record(ns, {uri :: string(),
+             prefix = undefined :: string() | undefined, % prefix that will be used in the result
              efd = unqualified :: qualified | unqualified % elementFormDefault
             }).
 -record(qname, {uri, localPart, prefix, mappedPrefix}).

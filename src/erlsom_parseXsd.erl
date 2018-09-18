@@ -608,7 +608,7 @@ xsdModel(Namespaces) ->
 xsdModel() ->
   xsdModel([]).
 
-% -spec parseXsd(string() | binary(), [#ns{}]) -> TODO
+% -spec parseXsd(erlsom:xml_data(), [#ns{}]) -> TODO
 parseXsd(Xsd, Namespaces) ->
   %% -record(anyAttr, {prCont, ns}). %% for anyAttributes
   GrammarModel = xsdModel(Namespaces),
