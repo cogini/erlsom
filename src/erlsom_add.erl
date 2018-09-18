@@ -47,12 +47,13 @@
 %% -record(type, {nm, tp = sequence, els, atts = [], anyAttr, nillable, nr, mn = 1, mx = 1}).
 %% -record(el, {alts, mn = 1, mx = 1, nr}).
 
--spec add(file:filename_all(), list(), erlsom:model()) -> erlsom:model().
+-spec add(string() | binary(), list(), erlsom:model()) -> erlsom:model().
 %% @doc Returns the new #model.
 add(Xsd, Options, Model1) ->
   {ok, Model2} = erlsom:compile_xsd(Xsd, Options),
   add_model(Model1, Model2).
 
+-spec add_xsd_model(erlsom:model()) -> erlsom:model().
 add_xsd_model(Model1) ->
   add_model(Model1, erlsom_parseXsd:xsdModel()).
 

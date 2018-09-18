@@ -107,7 +107,7 @@
   %% end,
   %% debugTypes(T).
 
-% -spec compile(file:filename_all(), list()) -> erlsom:model().
+-spec compile(string() | binary(), [erlsom:compile_option()]) -> {ok, erlsom:model()} | {error, term()}.
 compile(Xsd, Options) ->
   compile_internal(Xsd, Options, false).
 
@@ -116,7 +116,7 @@ compile_parsed_xsd(ParsedXsd, Options) ->
 
 %% This is slightly messy: xsd can either be a parsed xsd or not. If it isn't, then it still has
 %% to be parsed.
-% -spec compile_internal(TODO, [compile_option()], boolean()) -> TODO
+% -spec compile_internal(string() | binary(), [compile_option()], boolean()) -> TODO
 compile_internal(Xsd, Options, Parsed) ->
   Namespaces = case lists:keysearch('namespaces', 1, Options) of
                  {value, {_, Namesp}} ->

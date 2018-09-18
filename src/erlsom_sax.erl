@@ -53,8 +53,6 @@
   {error, Description::string()} |
   {internalError, Description::string()}.
 
--type event_fun() :: fun((sax_event(), term()) -> term()).
-
 -export([parseDocument/3]).
 -export([parseDocument/4]).
 
@@ -154,11 +152,11 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
--spec parseDocument(string() | binary(), term(), event_fun()) -> term().
+-spec parseDocument(string() | binary(), term(), erlsom:event_fun()) -> term().
 parseDocument(Xml, UserState, Callback) ->
   parseDocument(Xml, UserState, Callback, []).
 
--spec parseDocument(string() | binary(), term(), event_fun(), [sax_option()]) -> term().
+-spec parseDocument(string() | binary(), term(), erlsom:event_fun(), [sax_option()]) -> term().
 parseDocument(Xml, UserState, Callback, Options) ->
   S = (getOptions(Options))#erlsom_sax_state{callback = Callback,
                                              user_state = UserState},
@@ -180,16 +178,12 @@ parseDocument(Xml, S) when is_binary(Xml) ->
       parseDocumentBinary(Encoding, Xml, S)
   end.
 
-%% @doc Just like {@link parseDocument/3}, but working on a binary instead of a list.
-%% Encoding = the encoding of the binary (atom()). Supported values:
-%% - 'utf8'
-%% - 'utf16be'
-%% - 'utf16le'
-%% - 'latin-1'
-%% - 'iso_8859_1'
-%% - 'iso_8859_15'
-
--spec parseDocumentBinary(encoding(), binary(), term()) -> term().
+%% @doc Like {@link parseDocument/3}, but working on a binary instead of a list.
+%% @param Encoding the encoding of the data
+%% @param Xml document data
+%% @param State parsing state
+%% @returns State
+-spec parseDocumentBinary(encoding(), binary(), term()) -> {ok, term(), string()}.
 parseDocumentBinary(Encoding, Xml, State) ->
   case Encoding of
     'utf8' ->

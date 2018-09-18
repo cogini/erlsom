@@ -64,6 +64,9 @@
   {internalError, any()}.
 -export_type([sax_event/0]).
 
+-type event_fun() :: fun((sax_event(), term()) -> term()).
+-export_type([event_fun/0]).
+
 -type compile_option() :: {namespaces, [#ns{} | {Uri::string(), Prefix::string()}]} |
   {prefix, string()} |
   {type_prefix, string()} |
@@ -79,10 +82,15 @@
   {already_imported, list({Uri::string(), Prefix::string()})}.
 -export_type([compile_option/0]).
 
+-type xml_data() :: string() | binary().
+-export_type([xml_data/0]).
+
+%% Error reason from file:read_file/1 or file:write_file/2
+-type file_error() :: file:posix() | badarg | terminated | system_limit.
+
 %% @doc Compile an XSD into a structure to be used by {@link scan/2}.
-%% Args:
-%%     XSD  = string(): the XSD.
-%%     Options = [Option]
+%% @param XSD the XSD.
+%% @param Options [Option]
 %%     Option = {prefix, Prefix} |
 %%              {strict, boolean()} |
 %%              {include_fun, Include_fun} |
@@ -148,11 +156,11 @@
 %% Returns: {ok, Model}, where Model is the internal structure, see
 %% xml2struct.erl
 %%----------------------------------------------------------------------
--spec compile_xsd(file:filename_all()) -> {ok, model()} | {error, term()}.
+-spec compile_xsd(xml_data()) -> {ok, model()} | {error, term()}.
 compile_xsd(Xsd) ->
   compile_xsd(Xsd, []).
 
--spec compile_xsd(file:filename_all(), [compile_option()]) -> {ok, model()} | {error, term()}.
+-spec compile_xsd(xml_data(), [compile_option()]) -> {ok, model()} | {error, term()}.
 compile_xsd(Xsd, Options) ->
   case catch erlsom_compile:compile(Xsd, Options) of
     {error, Message} -> {error, Message};
@@ -160,13 +168,13 @@ compile_xsd(Xsd, Options) ->
     Result -> Result
   end.
 
--spec compile_xsd_file(file:filename_all()) -> {ok, model()} | {error, Reason} when
-    Reason :: file:posix() | badarg | terminated | system_limit.
+-spec compile_xsd_file(file:name_all()) -> {ok, model()} | {error, Reason} when
+    Reason :: file_error().
 compile_xsd_file(Xsd) ->
   compile_xsd_file(Xsd, []).
 
--spec compile_xsd_file(file:filename_all(), [compile_option()]) -> {ok, model()} | {error, Reason} when
-    Reason :: file:posix() | badarg | terminated | system_limit.
+-spec compile_xsd_file(file:name_all(), [compile_option()]) -> {ok, model()} | {error, Reason} when
+    Reason :: file_error().
 compile_xsd_file(XsdFile, Options) ->
   case file:read_file(XsdFile) of
     {ok, Bin} ->
@@ -177,17 +185,11 @@ compile_xsd_file(XsdFile, Options) ->
 
 %% @deprecated Use {@link compile_xsd/2} instead.
 %% @doc Compile XSD into a structure to be used by {@link parse/2}.
-%% Args:
-%%     XSD = string(): the XSD.
-%%     Prefix = string
-%%     Namespaces = [#ns]
-%%
-%%     'Prefix' is prefixed to the record names in the
-%%     in the XSD.
-%%     'Namespaces' should include the URIs of imported namespaces;
+%% @param XSD the XSD.
+%% @prefix Prefix String added to the record names in the XSD.
+%% @prefix Namespaces List of [#ns], should include the URIs of imported namespaces;
 %%     the purpose is to define the prefix for those.
-%%
-%% Returns: {ok, Model}, where Model is the internal structure, see
+%% @returns {ok, Model}, where Model is the internal structure, see
 %% xml2struct.erl
 %%----------------------------------------------------------------------
 -spec compile(binary()) -> {ok, model()} | {error, term()}.
@@ -244,11 +246,11 @@ compile_file(XsdFile, Prefix, Namespaces) ->
 %%     TrailingCharacters = any characters in the input string after the
 %%       XML document.
 %%----------------------------------------------------------------------
--spec scan(string() | binary(), model()) -> {ok, term(), string()} | {error, term()}.
+-spec scan(xml_data(), model()) -> {ok, term(), string()} | {error, term()}.
 scan(Xml, Model) ->
   scan(Xml, Model, []).
 
--spec scan(string() | binary(), model(), list()) -> {ok, term(), string()} | {error, term()}.
+-spec scan(xml_data(), model(), list()) -> {ok, term(), string()} | {error, term()}.
 scan(Xml, #model{value_fun = ValFun} = Model, Options) ->
   State = #state{model=Model, namespaces=[], value_fun = ValFun},
   case lists:keysearch(acc, 1, Options) of
@@ -263,7 +265,7 @@ scan(Xml, #model{value_fun = ValFun} = Model, Options) ->
   %%{Data, CS2} = F(CS),
   %%{T ++ Data, S#state{continuationState = {F, CS2}}}.
 
--spec scan2(string() | binary(), term(), list()) -> {ok, term(), string()} | {error, term()}.
+-spec scan2(xml_data(), term(), list()) -> {ok, term(), string()} | {error, term()}.
 scan2(Xml, State, Options) ->
   case catch erlsom_sax:parseDocument(Xml, State,
                                       fun erlsom_parse:xml2StructCallback/2,
@@ -296,7 +298,7 @@ scan_file(File, Model, Options) ->
 %% @deprecated Use {@link scan/2} instead.
 %% @doc Same as {@link scan/2}, but without the trailing characters. If there are any
 %% trailing characters they are ignored.
--spec parse(string() | binary(), model()) -> {ok, term()} | {error, term()}.
+-spec parse(xml_data(), model()) -> {ok, term()} | {error, term()}.
 parse(Xml, Model) ->
   case scan(Xml, Model) of
     {error, Message} -> {error, Message};
@@ -333,17 +335,19 @@ parse_file(File, Model) ->
 %% Returns: {ok, SimpleForm, Tail}
 %%     or {error, ErrorMessage}.
 %%----------------------------------------------------------------------
--spec simple_form(string() | binary(), list()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
+-spec simple_form(xml_data(), list()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
 simple_form(Xml, Options) ->
   erlsom_simple_form:scan(Xml, Options).
 
--spec simple_form(string() | binary()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
+-spec simple_form(xml_data()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
 simple_form(Xml) ->
   simple_form(Xml, []).
 
+-spec simple_form_file(file:name_all()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
 simple_form_file(File) ->
   simple_form_file(File, []).
 
+-spec simple_form_file(file:name_all(), list()) -> {ok, SimpleForm::term(), Tail::string()} | {error, Message::string()}.
 simple_form_file(File, Options) ->
   case file:read_file(File) of
     {ok, Bin} ->
@@ -388,18 +392,14 @@ write(Struct, Model, Options) ->
 
 
 %%----------------------------------------------------------------------
-%% Function: parse_sax/3
-%% Purpose: parse an XML document, using the org.xml.sax ContentHandler
-%%     interface [SAX].
-%%
-%% Args:
-%%     Xml - A list of integers that correspond with the characters in an XML
+%% @doc parse an XML document using the org.xml.sax ContentHandler interface [SAX].
+%% @param Xml A list of integers that correspond with the characters in an XML
 %%         document. Can be either 1 byte characters or integers that
 %%         correspond to Unicode code points.
 %%
-%%     State - a term() that is passed to the EventFun.
+%% @param State a term() that is passed to the EventFun.
 %%
-%%     Eventfun - a fun() that is called by the parser whenever it has parsed
+%% @param  Eventfun - a fun() that is called by the parser whenever it has parsed
 %%         a bit of the Xml input. The function is called by the parser
 %%         according to the Sax specification (see [SAX]).
 %%
@@ -411,21 +411,23 @@ write(Struct, Model, Options) ->
 %%         EventFun should return State, a term() that wil be passed back to
 %%         the next invocation of EventFun.
 %%
-%%     Options - [Option]
+%% @param Options [Option]
 %%     Option
 %%       - {output_encoding, Encoding} This determines the encoding of
 %%         the 'character data': element values and attribute values. The
 %%         only supported encoding at this moment is 'utf8'. The default is
 %%         string().
 %%
-%%  Returns: {ok, State, TrailingCharacters}
+%% @returns {ok, State, TrailingCharacters}
 %%     State = the result of the last invocation of the callback function)
 %%     TrailingCharacters = any characters in the input string after the
 %%       XML document.
 %%----------------------------------------------------------------------
+-spec parse_sax(xml_data(), term(), event_fun(), list()) -> term().
 parse_sax(Xml, State, EventFun, Options) ->
   erlsom_sax:parseDocument(Xml, State, EventFun, Options).
 
+-spec parse_sax(xml_data(), term(), event_fun()) -> term().
 parse_sax(Xml, State, EventFun) ->
   parse_sax(Xml, State, EventFun, []).
 
@@ -442,42 +444,41 @@ sax(Xml, State, EventFun, Options) ->
   {ok, Result, _TrailingCharacters} = parse_sax(Xml, State, EventFun, Options),
   Result.
 
+-spec write_hrl(model(), file:name_all()) -> ok | {error, file_error()}.
 write_hrl(Model, Output) ->
   write_hrl(Model, Output, []).
 
+-spec write_hrl(model(), file:name_all(), list()) -> ok | {error, file_error()}.
 write_hrl(Model, Output, Options) ->
   Hdr = erlsom_writeHrl:writeHrl(Model, Options),
   file:write_file(Output, Hdr).
 
 %%----------------------------------------------------------------------
-%% Function: write_xsd_hrl_file/3
-%% Purpose: write record definitions (a .hrl file) for an xsd.
-%%
-%% Args:
-%%     Xsd = the filename of the .xsd file
-%%
-%%     Namespaces = [#ns]
+%% @doc Write record definitions (a .hrl file) for an XSD.
+%% @param Xsd name of the input XSD file.
+%% @param Output name of the output file.
+%% @param Options Compile options plus the following:
 %%
 %%     'Namespaces' should include the URIs of all namespaces used
 %%     in the XSD. 'Prefix' is prefixed to the record names.
 %%
-%%     Output = the name of the output file.
+%%  * `{attribute_hrl_prefix, string()}' -- prefix for the record
+%%  fields representing attributes. Defaults to "". E.g. if option
+%%  {attribute_hrl_prefix, "attr_"} will be passed to this function,
+%%  attribute "id" in the XML Schema will be represented by the field
+%%  'attr_id' in the generated record. This is useful in the cases
+%%  when a complex type have an attribute and an element with the
+%%  same name.
 %%
-%%     Options = Compile options plus the following:
-%%
-%%        * `{attribute_hrl_prefix, string()}' -- prefix for the record
-%%          fields representing attributes. Defaults to "". E.g. if option
-%%          {attribute_hrl_prefix, "attr_"} will be passed to this function,
-%%          attribute "id" in the XML Schema will be represented by the field
-%%          'attr_id' in the generated record. This is useful in the cases
-%%          when a complex type have an attribute and an element with the
-%%          same name.
-%%
-%% Returns: ok, or an error if the file was not found.
+%% @returns ok or a file read/write error.
 %%----------------------------------------------------------------------
+-spec write_xsd_hrl_file(file:name_all(), file:name_all()) -> ok | {error, Reason} when
+      Reason :: file_error().
 write_xsd_hrl_file(Xsd, Output) ->
   write_xsd_hrl_file(Xsd, Output, []).
 
+-spec write_xsd_hrl_file(file:name_all(), file:name_all(), list()) -> ok | {error, Reason} when
+      Reason :: file_error().
 write_xsd_hrl_file(Xsd, Output, Options) ->
   case file:read_file(Xsd) of
     {ok, Bin} ->
@@ -487,14 +488,18 @@ write_xsd_hrl_file(Xsd, Output, Options) ->
       Error
   end.
 
+-spec write_hrl_file(file:name_all(), file:name_all()) -> ok | {error, Reason} when
+      Reason :: file_error().
 write_hrl_file(Xsd, Output) ->
   write_hrl_file(Xsd, "p", [], Output).
 
+-spec write_hrl_file(file:name_all(), string(), file:name_all()) -> ok | {error, Reason} when
+      Reason :: file_error().
 write_hrl_file(Xsd, Prefix, Output) ->
   write_hrl_file(Xsd, Prefix, [], Output).
 
 -spec write_hrl_file(file:name_all(), string(), [#ns{}], file:name_all()) -> ok | {error, Reason} when
-    Reason :: file:posix() | badarg | terminated | system_limit.
+    Reason :: file_error().
 write_hrl_file(Xsd, Prefix, Namespaces, Output) ->
   case file:read_file(Xsd) of
     {ok, Bin} ->
@@ -504,8 +509,8 @@ write_hrl_file(Xsd, Prefix, Namespaces, Output) ->
       Error
   end.
 
--spec add_xsd_file(file:filename_all(), list(), model()) -> {ok, model()} | {error, Reason} when
-      Reason :: file:posix() | badarg | terminated | system_limit.
+-spec add_xsd_file(file:name_all(), list(), model()) -> {ok, model()} | {error, Reason} when
+      Reason :: file_error().
 add_xsd_file(XsdFile, Options, Model) ->
   case file:read_file(XsdFile) of
     {ok, Bin} ->
@@ -514,20 +519,24 @@ add_xsd_file(XsdFile, Options, Model) ->
       Error
   end.
 
+-spec add_file(file:name_all(), string(), model()) -> model() | Reason when
+    Reason :: file_error().
 add_file(XsdFile, Prefix, Model) ->
   {_, Result} = add_xsd_file(XsdFile, [{prefix, Prefix}], Model),
   Result.
 
-%% add the model for XML schema to a model.
+%% @doc Add the model for XML schema to a model.
 %% We need a special function, since:
 %% A - Erlsom can't parse the schema for XML schema
 %% B - even if it would be able to parse the schema for XML schema,
 %%     the output would be difficult to process.
 %%
 %% Expected to be used for parsing of WSDL files.
+-spec add_xsd_model(model()) -> model().
 add_xsd_model(Model) ->
   erlsom_add:add_xsd_model(Model).
 
-%% add Model2 to Model1
+%% @doc add Model2 to Model1
+-spec add_model(erlsom:model(), erlsom:model()) -> erlsom:model().
 add_model(Model1, Model2) ->
   erlsom_add:add_model(Model1, Model2).

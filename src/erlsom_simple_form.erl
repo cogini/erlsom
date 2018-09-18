@@ -28,6 +28,12 @@
 
 -include("erlsom_sax.hrl").
 
+%%  Namefun is a function with 3 arguments: Name, Namespace, Prefix.
+%%  It should return a term. It is called for each tag and antribute
+%%  name. The result will be used in the output. Default is Name
+%%  if Namespace == undefined, and a string {Namespace}Name otherwise.
+-type name_fun() :: fun((Name::string(), Namespace::string() | undefined, Prefix::string()) -> string()).
+
 -record(sState, {stack, nameFun, options}).
 
 scan(Xml, Options) ->
@@ -42,7 +48,7 @@ scan(Xml, Options) ->
     #sState{stack = [], nameFun = Fun},
     fun callback/2, Options2).
 
-
+-spec new_state(name_fun()) -> #sState{}.
 new_state(Namefun) ->
   #sState{stack = [], nameFun = Namefun, options = []}.
 

@@ -42,18 +42,18 @@
 %% debug(Text1, Text2) ->
   %% io:format("~p ~p~n", [Text1, Text2]).
 
--spec write_hrl(Model::erlsom:model()) -> {hrl_header(), hrl_types()}.
+-spec write_hrl(erlsom:model()) -> {hrl_header(), hrl_types()}.
 write_hrl(Model) ->
-    write_hrl(Model, []).
+  write_hrl(Model, []).
 
--spec write_hrl(Model::erlsom:model(), Options :: list()) -> {hrl_header(), hrl_types()}.
+-spec write_hrl(erlsom:model(), list()) -> {hrl_header(), hrl_types()}.
 write_hrl(#model{tps = Types, th = TypeHierarchy, any_attribs = AnyAtts}, Options) ->
   erlang:put(erlsom_attribute_hrl_prefix, proplists:get_value(attribute_hrl_prefix, Options, "")),
   {header(), writeTypes(Types, TypeHierarchy, AnyAtts)}.
 
 -spec writeHrl(erlsom:model()) -> iolist().
 writeHrl(Model) ->
-    writeHrl(Model, []).
+  writeHrl(Model, []).
 
 -spec writeHrl(erlsom:model(), list()) -> iolist().
 writeHrl(#model{} = Model, Options) ->
@@ -93,6 +93,7 @@ header() ->
   "%% only be used when *writing* an xml document.\n\n"
   "\n".
 
+-spec standard_types(boolean()) -> iolist().
 standard_types(AnyAtts) ->
   case AnyAtts of
     true ->
@@ -124,8 +125,7 @@ writeType(#type{nm = '_document'}, _, _) ->
   [];
 writeType(#type{nm = Name, els = Elements, atts = Attributes, mxd = Mixed},
           Hierarchy, AnyAtts) ->
-  Format = "~3n-record(~p, {~s})." ++
-           "~2n-type ~s :: ~s.",
+  Format = "~3n-record(~p, {~s})." ++ "~2n-type ~s :: ~s.",
   Fields = [case AnyAtts of
               true ->
                 "anyAttribs :: anyAttribs()";
@@ -138,6 +138,7 @@ writeType(#type{nm = Name, els = Elements, atts = Attributes, mxd = Mixed},
             formatType(Name), formatRecord(Name)],
   lists:flatten(io_lib:format(Format, Args)).
 
+-spec add_commas(list(string())) -> string().
 add_commas(Parts) ->
   string:join(lists:filter(fun(S) -> S /= "" end, Parts), ",").
 
