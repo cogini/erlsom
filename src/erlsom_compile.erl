@@ -1,33 +1,36 @@
-%%% Copyright (C) 2006 - 2008 Willem de Jong
-%%%
-%%% This file is part of Erlsom.
-%%%
-%%% Erlsom is free software: you can redistribute it and/or modify
-%%% it under the terms of the GNU Lesser General Public License as
-%%% published by the Free Software Foundation, either version 3 of
-%%% the License, or (at your option) any later version.
-%%%
-%%% Erlsom is distributed in the hope that it will be useful,
-%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%%% GNU Lesser General Public License for more details.
-%%%
-%%% You should have received a copy of the GNU Lesser General Public
-%%% License along with Erlsom.  If not, see
-%%% <http://www.gnu.org/licenses/>.
-%%%
-%%% Author contact: w.a.de.jong@gmail.com
-
+%%
+%% %CopyrightBegin%
+%%
+%% Copyright (C) 2006 - 2008 Willem de Jong
+%%
+%% This file is part of Erlsom.
+%%
+%% Erlsom is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU Lesser General Public License as
+%% published by the Free Software Foundation, either version 3 of
+%% the License, or (at your option) any later version.
+%%
+%% Erlsom is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU Lesser General Public License for more details.
+%%
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with Erlsom.  If not, see
+%% <http://www.gnu.org/licenses/>.
+%%
+%% CopyrightEnd%
+%%
+%% Author contact: w.a.de.jong@gmail.com
+%%
 
 %%% Version history:
 %%% 22-04-2009: fixed bug in processing of import inside include - see
 %%%             comment marked 20090422.
 
-%%% ===================================================================
-%%% Translates the XSD into the model used by erlsom_parse.
-%%% ===================================================================
-
-%% transform the xsd (in record form, as delivered by erlsom!) into
+%% @doc Translates the XSD into the model used by erlsom_parse.
+%%
+%% Transform the xsd (in record form, as delivered by erlsom) into
 %% the model required by erlsom.
 %%
 %% - import (and parse) imported XSDs (adding them to the list of

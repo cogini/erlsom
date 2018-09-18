@@ -1,26 +1,28 @@
-%%% @doc Support for XML Schema in Erlang
-%%%
-%%% This module provides the user interface for the Erlsom functions.
-%%%
-%%% @copyright 2006 - 2008 Willem de Jong
-%%%
-%%% This file is part of Erlsom.
-%%%
-%%% Erlsom is free software: you can redistribute it and/or modify
-%%% it under the terms of the GNU Lesser General Public License as
-%%% published by the Free Software Foundation, either version 3 of
-%%% the License, or (at your option) any later version.
-%%%
-%%% Erlsom is distributed in the hope that it will be useful,
-%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%%% GNU Lesser General Public License for more details.
-%%%
-%%% You should have received a copy of the GNU Lesser General Public
-%%% License along with Erlsom.  If not, see
-%%% <http://www.gnu.org/licenses/>.
-%%%
-%%% @author Willem de Jong <w.a.de.jong@gmail.com>
+%%
+%% %CopyrightBegin%
+%%
+%% Copyright (C) 2006 - 2008 Willem de Jong
+%%
+%% This file is part of Erlsom.
+%%
+%% Erlsom is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU Lesser General Public License as
+%% published by the Free Software Foundation, either version 3 of
+%% the License, or (at your option) any later version.
+%%
+%% Erlsom is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU Lesser General Public License for more details.
+%%
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with Erlsom.  If not, see
+%% <http://www.gnu.org/licenses/>.
+%%
+%% CopyrightEnd%
+%%
+%% Author contact: w.a.de.jong@gmail.com
+%%
 
 -module(erlsom).
 
@@ -403,13 +405,13 @@ write(Struct, Model, Options) ->
   erlsom_write:write(Struct, Model, Options).
 
 
-%%----------------------------------------------------------------------
-%% @doc parse an XML document using the org.xml.sax ContentHandler interface [SAX].
-%% @param Xml A list of integers that correspond with the characters in an XML
+%% @doc Parse an XML document using the org.xml.sax ContentHandler interface [SAX].
+%%
+%% @param Xml A list of integers corresponding to the characters in an XML
 %%         document. Can be either 1 byte characters or integers that
 %%         correspond to Unicode code points.
 %%
-%% @param State a term() that is passed to the EventFun.
+%% @param State a term() passed to the EventFun.
 %%
 %% @param  Eventfun - a fun() that is called by the parser whenever it has parsed
 %%         a bit of the Xml input. The function is called by the parser
@@ -431,10 +433,10 @@ write(Struct, Model, Options) ->
 %%         string().
 %%
 %% @returns {ok, State, TrailingCharacters}
-%%     State = the result of the last invocation of the callback function)
-%%     TrailingCharacters = any characters in the input string after the
-%%       XML document.
-%%----------------------------------------------------------------------
+%%
+%% State = the result of the last invocation of the callback function)
+%%
+%% TrailingCharacters = any characters in the input string after the XML document.
 -spec parse_sax(xml_data(), term(), event_fun(), list()) -> term().
 parse_sax(Xml, State, EventFun, Options) ->
   erlsom_sax:parseDocument(Xml, State, EventFun, Options).
@@ -465,8 +467,8 @@ write_hrl(Model, Output, Options) ->
 %%----------------------------------------------------------------------
 %% @doc Write record definitions (a .hrl file) for an XSD.
 %%
-%% @param Xsd name of the input XSD file.
-%% @param Output name of the output file.
+%% @param Xsd Name of the input XSD file.
+%% @param Output Name of the output file.
 %% @param Options Compile options plus the following:
 %%
 %%     'Namespaces' should include the URIs of all namespaces used

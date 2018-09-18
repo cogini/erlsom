@@ -1,24 +1,48 @@
-%% translates an erlang type specification to an xsd.
-
-
-%% The set of type specifications that can be translated is limited
-
+%%
+%% %CopyrightBegin%
+%%
+%% Copyright (C) 2006 - 2008 Willem de Jong
+%%
+%% This file is part of Erlsom.
+%%
+%% Erlsom is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU Lesser General Public License as
+%% published by the Free Software Foundation, either version 3 of
+%% the License, or (at your option) any later version.
+%%
+%% Erlsom is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU Lesser General Public License for more details.
+%%
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with Erlsom.  If not, see
+%% <http://www.gnu.org/licenses/>.
+%%
+%% CopyrightEnd%
+%%
+%% Author contact: w.a.de.jong@gmail.com
+%%
+%% @doc Translates an erlang type specification to an xsd.
+%%
+%% The set of type specifications that can be translated is limited.
+%%
 %% The spec consists of record definitions only.
 %% Only integer() and string() can be used as basic types.
 %% Lists and unions can be used to structure things (no tuples).
 %% All fields will be optional, except if you provide a default value (this is
 %% conform the meaning of the type specs). This is often not what you
 %% want in the XSD. It is easy to fix this in the resulting XSD.
-
+%%
 %% 'elements' will be created for all types. You can change this behaviour by
 %% explicitly limiting for which types elements must be created by using
 %% a module attribute "-erlsom_xsd_elements([Name])." (It is recommended
 %% to do this, since it will result in better type checking and
 %% a cleaner XSD).
-
+%%
 %% a namespace can be specified using a command line option, or using
 %% a special attribute in the file.
-
+%%
 %% It is possible to indicate which fields of a record have to be implemented
 %% as attributes by putting a module attribute "-erlsom_xsd_attributes([Name]).", where
 %% Name is of the form Record.Field. Attributes have to be declared in this way
@@ -26,7 +50,6 @@
 %% Alternativily, the fields can be given a name that starts with '@': '@attribute'.
 %% NOTE: only the first (couple of) elements of the record can be
 %% declared as attributes, since Erlsom will always put the attributes first.
-%%
 
 -module(erlsom_type2xsd).
 

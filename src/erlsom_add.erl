@@ -1,36 +1,40 @@
-%%% Copyright (C) 2006 - 2008 Willem de Jong
-%%%
-%%% This file is part of Erlsom.
-%%%
-%%% Erlsom is free software: you can redistribute it and/or modify
-%%% it under the terms of the GNU Lesser General Public License as
-%%% published by the Free Software Foundation, either version 3 of
-%%% the License, or (at your option) any later version.
-%%%
-%%% Erlsom is distributed in the hope that it will be useful,
-%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%%% GNU Lesser General Public License for more details.
-%%%
-%%% You should have received a copy of the GNU Lesser General Public
-%%% License along with Erlsom.  If not, see
-%%% <http://www.gnu.org/licenses/>.
-%%%
-%%% Author contact: w.a.de.jong@gmail.com
+%%
+%% %CopyrightBegin%
+%%
+%% Copyright (C) 2006 - 2008 Willem de Jong
+%%
+%% This file is part of Erlsom.
+%%
+%% Erlsom is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU Lesser General Public License as
+%% published by the Free Software Foundation, either version 3 of
+%% the License, or (at your option) any later version.
+%%
+%% Erlsom is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU Lesser General Public License for more details.
+%%
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with Erlsom.  If not, see
+%% <http://www.gnu.org/licenses/>.
+%%
+%% CopyrightEnd%
+%%
+%% Author contact: w.a.de.jong@gmail.com
+%%
 
-%%% ====================================================================
-%%% adds an XSD to an existing Erlsom Model
-%%% ====================================================================
-
-%%% Adds an XSD/namespace to an existing model. This is useful only if the
-%%% existing model contains 'any' elements that have to be parsed. A typical
-%%% example is the soap envelope. In order to parse the body, the parser needs
-%%% to know it's 'model'.
-
-%%% Compiles the model for the imported xsd, adds the types to the existing
-%%% model, adds all the alternatives from the _document element to the
-%%% _document element of the existing model, adds the namespaces, and finally
-%%% updates the alternatives for all 'any' types in the model.
+%% @doc Adds an XSD to an existing Erlsom Model
+%%
+%% Adds an XSD/namespace to an existing model. This is useful only if the
+%% existing model contains 'any' elements that have to be parsed. A typical
+%% example is the soap envelope. In order to parse the body, the parser needs
+%% to know it's 'model'.
+%%
+%% Compiles the model for the imported xsd, adds the types to the existing
+%% model, adds all the alternatives from the _document element to the
+%% _document element of the existing model, adds the namespaces, and finally
+%% updates the alternatives for all 'any' types in the model.
 
 -module(erlsom_add).
 -export([add/3]).

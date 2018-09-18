@@ -1,24 +1,31 @@
-%%% Copyright (C) 2006 - 2008 Willem de Jong
-%%%
-%%% This file is part of Erlsom.
-%%%
-%%% Erlsom is free software: you can redistribute it and/or modify
-%%% it under the terms of the GNU Lesser General Public License as
-%%% published by the Free Software Foundation, either version 3 of
-%%% the License, or (at your option) any later version.
-%%%
-%%% Erlsom is distributed in the hope that it will be useful,
-%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%%% GNU Lesser General Public License for more details.
-%%%
-%%% You should have received a copy of the GNU Lesser General Public
-%%% License along with Erlsom.  If not, see
-%%% <http://www.gnu.org/licenses/>.
-%%%
-%%% Author contact: w.a.de.jong@gmail.com
+%%
+%% %CopyrightBegin%
+%%
+%% Copyright (C) 2006 - 2008 Willem de Jong
+%%
+%% This file is part of Erlsom.
+%%
+%% Erlsom is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU Lesser General Public License as
+%% published by the Free Software Foundation, either version 3 of
+%% the License, or (at your option) any later version.
+%%
+%% Erlsom is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU Lesser General Public License for more details.
+%%
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with Erlsom.  If not, see
+%% <http://www.gnu.org/licenses/>.
+%%
+%% CopyrightEnd%
+%%
+%% Author contact: w.a.de.jong@gmail.com
+%%
 
-%%% translate XML to the 'simple form' as used by XMERL.
+%% @doc Translate XML to the 'simple form' as used by XMERL.
+
 -module(erlsom_simple_form).
 
 %% user interface
@@ -32,7 +39,7 @@
 %%  It should return a term. It is called for each tag and antribute
 %%  name. The result will be used in the output. Default is Name
 %%  if Namespace == undefined, and a string {Namespace}Name otherwise.
--type name_fun() :: fun((Name::string(), Namespace::string() | undefined, Prefix::string()) -> string()).
+-type name_fun() :: fun((Name :: string(), Namespace :: string() | undefined, Prefix :: string()) -> string()).
 
 -record(sState, {stack, nameFun, options}).
 

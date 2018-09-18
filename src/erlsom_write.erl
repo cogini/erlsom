@@ -1,29 +1,33 @@
-%%% Copyright (C) 2006 - 2008 Willem de Jong
-%%%
-%%% This file is part of Erlsom.
-%%%
-%%% Erlsom is free software: you can redistribute it and/or modify
-%%% it under the terms of the GNU Lesser General Public License as
-%%% published by the Free Software Foundation, either version 3 of
-%%% the License, or (at your option) any later version.
-%%%
-%%% Erlsom is distributed in the hope that it will be useful,
-%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%%% GNU Lesser General Public License for more details.
-%%%
-%%% You should have received a copy of the GNU Lesser General Public
-%%% License along with Erlsom.  If not, see
-%%% <http://www.gnu.org/licenses/>.
-%%%
-%%% Author contact: w.a.de.jong@gmail.com
+%%
+%% %CopyrightBegin%
+%%
+%% Copyright (C) 2006 - 2008 Willem de Jong
+%%
+%% This file is part of Erlsom.
+%%
+%% Erlsom is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU Lesser General Public License as
+%% published by the Free Software Foundation, either version 3 of
+%% the License, or (at your option) any later version.
+%%
+%% Erlsom is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU Lesser General Public License for more details.
+%%
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with Erlsom.  If not, see
+%% <http://www.gnu.org/licenses/>.
+%%
+%% CopyrightEnd%
+%%
+%% Author contact: w.a.de.jong@gmail.com
 
-%%% ====================================================================
-%%% @doc translates a data structure of a pre-defined form to an XML document.
-%%%
-%%% This is the companion of erlsom_parse, which performs the inverse operation.
-%%% Both modules use the same 'model' that descibes the translation, see the
-%%% introduction to erlsom_parse for the definition of this model.
+%% @doc Translates a data structure of a pre-defined form to an XML document.
+%%
+%% This is the companion of @{link erlsom_parse}, which performs the inverse operation.
+%% Both modules use the same 'model' that descibes the translation, see the
+%% introduction to erlsom_parse for the definition of this model.
 
 -module(erlsom_write).
 -export([write/2,
