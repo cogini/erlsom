@@ -9,7 +9,7 @@ DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs -Wbehaviours
 PLT_FILE=.erlsom_plt
 APPS=kernel stdlib
 
-.PHONY: all clean test
+.PHONY: all clean test doc
 
 all: compile
 
